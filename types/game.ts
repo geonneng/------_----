@@ -101,8 +101,8 @@ export interface MiniGameData {
   description: string;
   stages: MiniGameStage[];
   successPath: string[]; // 성공 선택지 ID 배열
-  onSuccess: string; // 다음 시나리오 ID
-  onFailure: EndingType;
+  onSuccess: string; // 다음 시나리오 ID 또는 엔딩 타입
+  onFailure: string; // 다음 시나리오 ID 또는 엔딩 타입
 }
 
 // 엔딩 타입
