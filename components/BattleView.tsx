@@ -18,6 +18,10 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [gameOver, setGameOver] = useState(false);
   const [nextDefenseMultiplier, setNextDefenseMultiplier] = useState(1);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentQuiz, setCurrentQuiz] = useState<typeof battle.quizzes[0] | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
     if (enemyHp <= 0 && !gameOver) {
@@ -27,9 +31,12 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
     } else if (playerHp <= 0 && !gameOver) {
       setGameOver(true);
       setBattleLog(prev => [...prev, '패배했습니다...']);
-      setTimeout(() => onDefeat(), 2000);
+      // 랜덤 퀴즈 선택
+      const randomQuiz = battle.quizzes[Math.floor(Math.random() * battle.quizzes.length)];
+      setCurrentQuiz(randomQuiz);
+      setTimeout(() => setShowQuiz(true), 2000);
     }
-  }, [playerHp, enemyHp, gameOver, onVictory, onDefeat]);
+  }, [playerHp, enemyHp, gameOver, onVictory, battle.quizzes]);
 
   const handleAction = (action: BattleAction) => {
     if (!isPlayerTurn || gameOver) return;
@@ -37,8 +44,20 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
     let newLog = [...battleLog];
 
     // 플레이어 공격
-    const damage = Math.floor(battle.playerAttack * action.damageMultiplier);
-    if (damage > 0) {
+    let damage = 0;
+    if (action.damageMultiplier > 0) {
+      // 랜덤 데미지 계산
+      if (action.id === 'charge' || action.id === 'choi-charge') {
+        // 돌격 명령: 5~30 랜덤 피해
+        damage = Math.floor(Math.random() * 26) + 5; // 5~30
+      } else if (action.id === 'fire-arrow') {
+        // 불화살: 10~20 랜덤 피해
+        damage = Math.floor(Math.random() * 11) + 10; // 10~20
+      } else {
+        // 기타 공격 (고려편 군사 독려 등)
+        damage = Math.floor(battle.playerAttack * action.damageMultiplier);
+      }
+      
       const newEnemyHp = Math.max(0, enemyHp - damage);
       setEnemyHp(newEnemyHp);
       newLog.push(`${action.name}! ${damage}의 피해를 입혔습니다!`);
@@ -96,6 +115,98 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
     setNextDefenseMultiplier(1);
     setIsPlayerTurn(true);
   };
+
+  const handleQuizAnswer = (choiceId: string) => {
+    if (!currentQuiz || selectedAnswer) return;
+    
+    setSelectedAnswer(choiceId);
+    setShowResult(true);
+    
+    const selectedChoice = currentQuiz.choices.find(c => c.id === choiceId);
+    if (selectedChoice?.isCorrect) {
+      // 정답 - 다음 막으로
+      setTimeout(() => {
+        setShowQuiz(false);
+        onVictory();
+      }, 2000);
+    } else {
+      // 오답 - 패배 엔딩으로
+      setTimeout(() => {
+        setShowQuiz(false);
+        onDefeat();
+      }, 2000);
+    }
+  };
+
+  // 퀴즈 화면
+  if (showQuiz && currentQuiz) {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 animate-fadeIn">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-responsive-2xl font-bold text-yellow-400 mb-2">
+            마지막 기회!
+          </h2>
+          <p className="text-sm sm:text-base text-white/80">
+            퀴즈를 맞추면 전투를 계속할 수 있습니다
+          </p>
+        </div>
+
+        <div className="bg-white/5 border-2 border-yellow-600/50 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <p className="text-white text-base sm:text-lg leading-relaxed whitespace-pre-line">
+            {currentQuiz.question}
+          </p>
+        </div>
+
+        <div className="space-y-3 sm:space-y-4">
+          {currentQuiz.choices.map((choice) => {
+            const isSelected = selectedAnswer === choice.id;
+            const isCorrect = choice.isCorrect;
+            
+            let buttonClass = "w-full text-left h-auto py-3 sm:py-4 px-4 sm:px-5 md:px-6 text-sm sm:text-base border-2 transition-colors touch-target";
+            
+            if (showResult && isSelected && isCorrect) {
+              buttonClass += " border-green-500 bg-green-500/20 text-green-300";
+            } else if (showResult && isSelected && !isCorrect) {
+              buttonClass += " border-red-500 bg-red-500/20 text-red-300";
+            } else if (showResult && isCorrect) {
+              buttonClass += " border-green-500/60 bg-green-500/10 text-green-400";
+            } else {
+              buttonClass += " border-yellow-600/60 text-white hover:bg-yellow-600/20 hover:border-yellow-500";
+            }
+            
+            return (
+              <Button
+                key={choice.id}
+                variant="outline"
+                className={buttonClass}
+                onClick={() => handleQuizAnswer(choice.id)}
+                disabled={showResult}
+              >
+                <span className="font-bold mr-2">{choice.id}.</span>
+                {choice.text}
+                {showResult && isCorrect && <span className="ml-2">✓</span>}
+                {showResult && isSelected && !isCorrect && <span className="ml-2">✗</span>}
+              </Button>
+            );
+          })}
+        </div>
+        
+        {showResult && (
+          <div className="mt-6 sm:mt-8 text-center">
+            <p className={`text-base sm:text-lg font-bold ${
+              currentQuiz.choices.find(c => c.id === selectedAnswer)?.isCorrect 
+                ? 'text-green-400' 
+                : 'text-red-400'
+            }`}>
+              {currentQuiz.choices.find(c => c.id === selectedAnswer)?.isCorrect 
+                ? '정답입니다! 전투를 계속합니다...' 
+                : '오답입니다... 패배합니다...'}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 animate-fadeIn">

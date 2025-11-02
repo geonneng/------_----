@@ -54,6 +54,16 @@ export interface BattleAction {
   heal?: number;
 }
 
+// 퀴즈 데이터
+export interface BattleQuiz {
+  question: string;
+  choices: {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+  }[];
+}
+
 // 전투 데이터
 export interface BattleData {
   id: string;
@@ -72,6 +82,8 @@ export interface BattleData {
   }[];
   onVictory: string; // 다음 시나리오 ID
   onDefeat: EndingType;
+  quizzes: BattleQuiz[]; // 패배 시 랜덤 퀴즈
+  onQuizSuccess: string; // 퀴즈 정답 시 다음 시나리오 ID
 }
 
 // 미니게임 스테이지

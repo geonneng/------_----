@@ -105,6 +105,7 @@ export default function Home() {
   const handleBattleVictory = () => {
     if (!gameState.battleData) return;
     
+    // 퀴즈 정답 후 승리인 경우 onQuizSuccess 사용
     const nextScenarioId = gameState.battleData.onVictory;
     setGameState(prev => ({
       ...prev,
