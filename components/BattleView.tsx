@@ -147,7 +147,7 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
             마지막 기회!
           </h2>
           <p className="text-sm sm:text-base text-white/80">
-            퀴즈를 맞추면 전투를 계속할 수 있습니다
+            퀴즈를 맞추면 이야기를 계속 진행할 수 있습니다
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export function BattleView({ battle, onVictory, onDefeat }: BattleViewProps) {
                 : 'text-red-400'
             }`}>
               {currentQuiz.choices.find(c => c.id === selectedAnswer)?.isCorrect 
-                ? '정답입니다! 전투를 계속합니다...' 
+                ? '정답입니다! 이야기를 계속 진행합니다...' 
                 : '오답입니다... 패배합니다...'}
             </p>
           </div>
