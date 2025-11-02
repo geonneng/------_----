@@ -48,10 +48,12 @@ export default function Home() {
     const result = scenarioResults[choiceId];
     
     if (!result) {
-      console.error('결과를 찾을 수 없습니다:', choiceId);
+      console.error('❌ 결과를 찾을 수 없습니다:', choiceId);
+      alert(`결과 데이터가 없습니다: ${choiceId}\n개발자에게 문의해주세요.`);
       return;
     }
 
+    console.log('✅ 선택지 결과 로드:', choiceId, result);
     const newHistory = [...gameState.choiceHistory, choiceId];
     
     // 결과 화면 표시
